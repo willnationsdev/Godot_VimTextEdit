@@ -1,0 +1,28 @@
+Import('env')
+
+sources = [
+	"register_types.cpp",
+	"scancode_to_vim.cpp",
+	"text_edit.cpp"
+]
+
+vim_env = env.Clone()
+
+dir = Dir('.').srcnode().abspath
+
+vim_env.Append(CPPPATH=[dir + '/inc'])
+vim_env.Append(CCFLAGS=['-fpermissive'])
+env.Append(LIBPATH=[dir + '/lib'])
+env.Append(LIBS=['vim', 'termcap'])
+
+if ARGUMENTS.get('vim_shared', 'no') == 'yes':
+	# Shared lib compilation
+	vim_env.Append(CCFLAGS=['-fPIC'])
+	shared_lib = vim_env.SharedLibrary(target='#bin/vim', source=sources)
+	shared_lib_shim = shared_lib[0].name.rsplit('.', 1)[0]
+
+	env.Append(LIBS=[shared_lib_shim])
+	env.Append(LIBPATH=['#bin'])
+else:
+	# Static compilation
+	vim_env.add_source_files(env.modules_sources, sources)
